@@ -1,0 +1,328 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>passwordCheckingWebpage</title>
+</head>
+
+<body>
+<p>
+	<style type="text/css">
+.hide {
+	display: none;
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 1em;
+	font-style: normal;
+	line-height: normal;
+	font-weight: normal;
+	font-variant: normal;
+	text-transform: none;
+}
+.hidebox {
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 1em;
+}
+
+.bigInput {
+	font-size: 1.1em;
+	width: 100%;
+}
+.score {
+	font-size: 1em;
+	margin-top: 0.1em;
+	text-align: center;
+}
+
+.container {
+	display: inline-block;
+	background-color: #eeeeee;
+	-webkit-transition: background 1s linear;
+	-moz-transition: background 1s linear;
+	-o-transition: background 1s linear;
+	transition: background 1s linear;
+	border: 1px solid #808080;
+	border-radius: 10px;
+	padding: 10px;
+	margin:auto;
+	width: 90%;
+	
+}
+.rules {
+	display: inline-block;
+	background-color: #eeeeee;
+	border: 1px solid #808080;
+	border-radius: 10px;
+	padding: 10px;
+	width: 90%;
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 1em;
+}
+.header_pc {
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 2em;
+}	</style>
+	<script>/**
+ * Password Strength Checker
+ *
+ * developed by Adrian Singh (as3632)
+ * modified by Matthew Harrington (mh25335)
+ * for the Open University, May 2014
+ */
+
+
+DEBUG = true;
+
+/* ensure we start with password hide box checked */
+document.getElementById("mask").checked="checked";
+
+/* for debugging purposes only display the workings */
+function trace(text) {
+    if (DEBUG != true) return;
+    el = document.getElementById("trace");
+    if (text == "CLS") {
+        el.innerHTML = "<br/>--Score Calculation--<br/>";
+        return;
+    }
+    else
+    el.innerHTML += text + "<br/>";
+}
+
+
+
+/* check the password */
+function checkPass(pwd) {
+    trace("CLS");
+
+    var nAlphaUC=0, nAlphaLC=0, nNumber=0, nSymbol=0;
+    var nConsecAlphaUC=0, nConsecAlphaLC=0, nConsecNumber=0, nConsecSymbol=0, nConsecChars=0, nRepChars=0;
+    var nSeqAlpha=0, nSeqNumber=0, nSeqSymbol=0, nSeqChar=0;
+    var nTmpAlphaUC="", nTmpAlphaLC="", nTmpNumber="", nTmpSymbol="";
+    var isRepeating = false;
+
+    var sAlphas = "abcdefghijklmnopqrstuvwxyz";
+    var sNumerics = "01234567890";
+    var score = 0;
+    var minPwdLen = 7;
+
+    /* trace("Password: "+pwd); */
+
+    var actPwd = pwd;//pwd.replace(/\s+/g,"").split(/\s*/);
+    var actPwdLen = actPwd.length;
+    trace("Length : "+actPwdLen +" character(s)");
+
+    if (actPwdLen < minPwdLen) {
+        document.getElementById("score").innerHTML = "<b>Too short</b>";
+        trace("Too short, please enter at least 7 characters.");
+		var containerbg = document.querySelector("#container");
+	containerbg.style.backgroundColor = "#eeeeee";
+        return;
+    }
+
+    /* Count the number of each kind of character */
+    for (var i=0; i < actPwdLen; i++) {
+        if (actPwd[i].match(/[A-Z]/g)) { //Upper case match
+            if (nTmpAlphaUC !== "") {
+                if ((nTmpAlphaUC + 1) == i) {
+                    nConsecAlphaUC++;
+                    nConsecChars++;
+                }
+            }
+            nTmpAlphaUC = i;
+            nAlphaUC++;
+        }
+        else if (actPwd[i].match(/[a-z]/g)) { //Lower case match
+            if (nTmpAlphaLC !== "") {
+                if ((nTmpAlphaLC + 1) == i) {
+                    nConsecAlphaLC++;
+                    nConsecChars++;
+                }
+            }
+            nTmpAlphaLC = i;
+            nAlphaLC++;
+        }
+        else if (actPwd[i].match(/[0-9]/g)) { //Numeric match
+            if (nTmpNumber !== "") {
+                if ((nTmpNumber + 1) == i) {
+                    nConsecNumber++;
+                    nConsecChars++;
+                }
+            }
+            nTmpNumber = i;
+            nNumber++;
+        }
+        else if (actPwd[i].match(/[^a-zA-Z0-9]/g)) { //Non alphanumeric match (i.e. symbol)
+            if (nTmpSymbol !== "") {
+                if ((nTmpSymbol + 1) == i) {
+                    nConsecSymbol++;
+                    nConsecChars++;
+                }
+            }
+            nTmpSymbol = i;
+            nSymbol++;
+        }
+
+        if (i < (actPwdLen-1)) { //check if this is a repeated char
+            if (actPwd[i] == actPwd[i+1]) {
+                if (!isRepeating) {
+                    nRepChars = nRepChars + 2;
+                    isRepeating = true;
+                } else {
+                    nRepChars++;
+                }
+            }
+            else isRepeating = false;
+        }
+    }
+
+    trace("Upper case characters: "+nAlphaUC);
+    trace("Lower case characters): "+nAlphaLC);
+    trace("Numbers : "+nNumber);
+    trace("Symbols : "+nSymbol);
+
+    /* total up the positive score */
+
+    if (nAlphaUC > 0)
+        scoreUC = 2*(actPwdLen-nAlphaUC);
+    else
+        scoreUC = 0;
+
+    if (nAlphaLC > 0)
+        scoreLC = 2*(actPwdLen-nAlphaLC);
+    else
+        scoreLC = 0;
+
+    score = (4*actPwdLen)+(scoreUC)+(scoreLC)+(4*nNumber)+(6*nSymbol);
+    trace("Score before deductions: "+(4*actPwdLen)+"+"+(scoreUC)+"+"+(scoreLC)+"+"+(4*nNumber)+"+"+(6*nSymbol)+"="+score);
+
+    /* Check for sequences of alpha strings */
+    for (var s=0; s < 23; s++) {
+        var sChk = sAlphas.substring(s, parseInt(s+3));
+        pwdFrag = pwd.toLowerCase();
+        do {
+            pos = pwdFrag.indexOf(sChk);
+            if (pos != -1) {
+                nSeqAlpha++;
+                nSeqChar++;
+                pwdFrag = pwdFrag.substring(pos+3, pwdFrag.length)
+            }
+        } while ((pos!=-1) && (pwdFrag.length>=3));
+    }
+
+    /* Check for sequences of numeric strings */
+    for (var s=0; s < 8; s++) {
+        var sChk = sNumerics.substring(s, parseInt(s+3));
+        pwdFrag = pwd.toLowerCase();
+        do {
+            pos = pwdFrag.indexOf(sChk);
+            if (pos != -1) {
+                nSeqNumber++;
+                nSeqChar++;
+                pwdFrag = pwdFrag.substring(pos+3, pwdFrag.length)
+            }
+        } while ((pos!=-1) && (pwdFrag.length>=3));
+    }
+
+    /* perform any deductions */
+
+    if ((nNumber + nSymbol) == 0) {
+        score = score - actPwdLen;
+        trace("No numbers or symbols, subtracting "+actPwdLen);
+    }
+
+    if ((nAlphaUC + nAlphaLC + nSymbol) == 0) {
+        score = score - actPwdLen;
+        trace("No letters or symbols, subtracting "+actPwdLen);
+    }
+
+    if (nConsecChars > 0) {
+        score = score - nConsecChars * 2;
+        trace(nConsecChars+" consecutive characters, subtracting "+nConsecChars * 2);
+    }
+
+    if (nRepChars > 0) {
+        score = score - nRepChars * 2;
+        trace(nRepChars+" repeated characters, subtracting "+nRepChars * 2);
+    }
+
+    if (nSeqChar > 0) {
+        score = score - nSeqChar * 3;
+        trace(nSeqChar+" sequences...subtract "+nSeqChar * 3);
+    }
+
+    /* Determine the strength rating */
+    if (score <= 15) {
+        strength = "Very Weak";
+        col = "#cc3300";
+	    }
+    else if ((score > 15) && (score <= 40)) {
+        strength = "Weak";
+        col = "#ff6600";
+    }
+    else if ((score > 40) && (score <= 60)) {
+        strength = "Medium";
+        col = "#ffff66";
+    }
+    else if ((score > 60) && (score <= 100)) {
+        strength = "Strong";
+        col = "#66cc33";
+    }
+    else {
+        strength = "Very Strong";
+        col = "#66ff33";
+    }
+
+    /* display the overall score */
+    trace("Final Score: "+score);
+    scoreText = "<b>Score: " + score + "";
+    scoreText += "   <span + '>(" + strength + ")</span>";
+    scoreText += "</b>"
+    document.getElementById("score").innerHTML = scoreText;
+	var containerbg = document.querySelector("#container");
+	containerbg.style.backgroundColor = col;
+}
+
+/* toggle the password visibility */
+function togglePwdMask() {
+    var oPwd = document.getElementById("passwordPwd");
+    var oTxt = document.getElementById("passwordTxt");
+    var oMask = document.getElementById("mask");
+    if (oMask.checked) {
+        oPwd.value = oTxt.value;
+        oPwd.className = "bigInput";
+        oTxt.className += " hide";
+    }
+    else {
+        oTxt.value = oPwd.value;
+        oPwd.className += " hide";
+        oTxt.className = "bigInput";
+    }
+}
+</script>
+
+<meta name="keywords" content="password checker, online security, futurelearn cybersecurity mooc, how secure is my password, how safe is my password" />
+<meta name="description" content="A simple password checker from Alyx, this will look better in later versions" />
+</p>
+<table border="0" width="100%">
+	<tbody>
+		<tr>
+			<td width="50%">
+				<div class="container" id="container">
+					<div class="header_pc" style="display: inline-block; text-align: center;">
+						Password Strength Checker</div>
+					<p class="rteleft"><span class="bigInput">Password:</span> <input autocomplete="off" class="bigInput" id="passwordPwd" name="passwordPwd" onkeyup="checkPass(this.value);" size="20" type="password" /> <input autocomplete="off" class="bigInput hide" id="passwordTxt" name="passwordTxt" onkeyup="checkPass(this.value);" size="20" type="text" /></p>
+					<div class="hidebox" style="text-align: right">
+						Hide&nbsp;<input checked="checked" id="mask" name="mask" onclick="togglePwdMask();" type="checkbox" value="1" /></div>
+					<div class="score" id="score">
+						<b>&nbsp;</b></div>
+					<div class="score" id="trace">
+						&nbsp;</div>
+				</div>
+			</td>
+			<td width="50%">
+				<div class="rules">
+					<p style="text-align: center;font-size:1.1em;">Welcome to The Open University Password Strength Checker</p>
+					<p style="text-align: center;font-size:1.1em;">To begin, type a password in the box on the left. The calculator will then give you a score based on the length of your password and the variety of numbers, letters and symbols used. The higher the score, the more secure your password is.</p>
+					<p style="text-align: center;font-size:1.1em;">You can show your password by unchecking the 'hide' box to the left of these instructions. Make sure you don't leave your password visible to other people!</p>
+					<p style="text-align: center;font-size:1.1em;">Please note this tool does not send or record your password in any way.</p>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>
